@@ -1,0 +1,93 @@
+@startuml Device Controller Code
+
+class APIController {
+    - service: DeviceService
+    + init()
+    + addDevice()
+    + getDevice()
+    + updateDevice()
+    + deleteDevice()
+    + execCommand()
+}
+
+class DeviceService {
+  - deviceRepository: DeviceRepository
+  - eventRepository: EventRepository
+  + addDevice(device: Device): Device
+  + getDevice(deviceId: String): Device
+  + updateDevice(device: Device): void
+  + removeDevice(deviceId: UUID): void
+  + sendCommand(deviceId: UUID, payload: JSONObject): void
+  + createEvent(): void
+}
+
+interface DeviceInterface {
+    + sendCommand(deviceId: UUID, payload: JSONObject): void
+}
+
+
+class HeatingDevice implements DeviceInterface {
+    + enable()
+    + disable()
+    + setTemperature()
+}
+
+class LightDevice implements DeviceInterface {
+    + enable()
+    + disable()
+}
+
+class GateDevice implements DeviceInterface {
+    + open()
+    + close()
+}
+
+class CCTVDevice implements DeviceInterface {
+    + enable()
+    + disable()
+    + rotate()
+    + startRecording()
+    + stopRecording()
+}
+
+class EventRelay {
+  - eventRepository: EventRepository
+  + fetch(): ArrayList[DeviceEvent]
+  + send(DeviceEvent): void
+}
+
+class Device {
+  - id: UUID
+  - name: String
+  - type: DeviceType
+  - settings: JSONObject
+}
+
+
+class DeviceEvent {
+  - createdAt: OffsetDateTime
+  - deviceId: UUID
+  - eventType: DeviceEventType
+  - payload: JSONObject
+}
+
+enum DeviceEventType {
+  ADD
+  REMOVE
+  UPDATE
+  DELETE
+}
+
+APIController --> DeviceService
+
+DeviceService --> HeatingDevice
+DeviceService --> LightDevice
+DeviceService --> GateDevice
+DeviceService --> CCTVDevice
+
+DeviceService ..> DeviceEvent
+EventRelay ..> DeviceEvent
+DeviceService ..> Device
+DeviceEvent --> DeviceEventType
+
+@enduml

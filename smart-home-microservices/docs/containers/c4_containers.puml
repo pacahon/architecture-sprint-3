@@ -1,0 +1,67 @@
+@startuml Containers Diagram
+title Containers Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(client, "Клиент", "Эксплуатация подключенного оборудования")
+Person(support, "Администратор", "Техническое сопровождение")
+
+System_Boundary(smartHomeSystemBoundary, "Smart Home") {
+    Container(publicFrontendContainer, "Веб-интерфейс управления умными устройствами", "React")
+    Container(supportFrontendContainer, "Веб-интерфейс для техподдержки", "React")
+    Container(APIGatewayContainer, "API Gateway", "Балансировка запросов")
+
+    Container(notificationsContainer, "Уведомления", "Java", "Генерация уведомлений на отправку")
+    ContainerDb(notificationsDb, "Очередь сообщений", "RabbitMQ", "Очередь уведомлений на отправку")
+
+    Container(telemetryContainer, "Мониторинг и Телеметрия", "Java", "Логирование, алерты")
+    ContainerDb(telemetryDb, "База данных", "MongoDB", "Хранение данных IoT устройств, алертов")
+
+    Container(authContainer, "Пользователи", "Java", "Регистрация, авторизация, профили")
+    ContainerDb(authDb, "База данных", "Postgres", "Хранение данных о пользователях")
+
+    Container(supportContainer, "Техподдержка", "Java", "Публикация и разбор заявок")
+    ContainerDb(supportDb, "База данных", "Postgres", "Хранение данных по заявкам")
+
+    Container(deviceControllerContainer, "Управление устройствами", "Java", "Подключение, настройка и управление устройствами")
+    ContainerDb(deviceControllerDb, "База данных", "Postgres", "Устройства пользователей, их настройки")
+
+    SystemQueue(Kafka, "Kafka", "Межсервисное взаимодействие")
+}
+
+
+Rel(authContainer, authDb, "R/W", "SQL")
+Rel(supportContainer, supportDb, "R/W", "SQL")
+Rel(deviceControllerContainer, deviceControllerDb, "R/W", "SQL")
+Rel(notificationsContainer, notificationsDb, "R/W", "AMQP")
+Rel(telemetryContainer, telemetryDb, "R/W", "Wire Protocol")
+
+
+
+System_Ext(IoTDevicesExtSystem, "IoT-устройства", "отопление, свет, ворота, cctv")
+System_Ext(notificationsExtSystem, "Сервис отправки уведомлений", "sms, emails, push")
+
+Rel(client, publicFrontendContainer, "Использование")
+Rel(support, supportFrontendContainer, "Администрирование")
+
+Rel(publicFrontendContainer, APIGatewayContainer, "", "HTTPS, JSON")
+Rel(supportFrontendContainer, APIGatewayContainer, "", "HTTPS, JSON")
+
+Rel(APIGatewayContainer, deviceControllerContainer, "Передача команд на управление устройствами", "HTTP, JSON")
+Rel(APIGatewayContainer, authContainer, "Данные о пользователе, устройствах", "HTTP, JSON")
+Rel(APIGatewayContainer, notificationsContainer, "Настройка уведомлений, алертов", "HTTP, JSON")
+Rel(APIGatewayContainer, supportContainer, "Создание, просмотр заявок", "HTTP, JSON")
+Rel(APIGatewayContainer, telemetryContainer, "Создание, просмотр заявок", "HTTP, JSON")
+
+
+Rel(deviceControllerContainer, IoTDevicesExtSystem, "Команды устройств", "TCP, Binary")
+Rel(telemetryContainer, Kafka, "Сбор данных", "TCP, Binary")
+Rel(deviceControllerContainer, Kafka, "Pub/Sub", "TCP, Binary")
+Rel(notificationsContainer, Kafka, "Pub/Sub", "TCP, Binary")
+Rel(notificationsContainer, notificationsExtSystem, "Передача уведомления на отправку", "HTTPS, JSON")
+Rel(authContainer, Kafka, "Pub/Sub", "TCP, Binary")
+Rel(supportContainer, Kafka, "Pub/Sub", "TCP, Binary")
+Rel(IoTDevicesExtSystem, Kafka, "Публикация событий", "TCP, Binary")
+
+
+
+@enduml

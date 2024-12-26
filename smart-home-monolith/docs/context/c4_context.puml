@@ -1,0 +1,17 @@
+@startuml Monolith Context Diagram
+title Context Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(client, "Клиент", "Эксплуатация подключенного оборудования")
+Person(support, "Администратор", "Техническое сопровождение")
+
+System_Ext(heatingDevices, "Отопительное оборудование", "Реле обогревателя")
+System_Ext(sensorDevices, "Измерительное оборудование", "Датчики температуры окружающей среды")
+
+System(monolithSystem, "Теплый дом", "Монолитное приложение для управления отоплением")
+
+Rel(client, monolithSystem, "Мониторинг и управление температоруй", HTTP)
+Rel(support, monolithSystem,"Подключение новых устройств", HTTP)
+Rel(monolithSystem,sensorDevices,"Чтение температуры", HTTP)
+Rel(monolithSystem,heatingDevices,"Управление устройством, установка температуры", HTTP)
+@enduml

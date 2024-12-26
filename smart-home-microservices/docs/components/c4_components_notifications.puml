@@ -1,0 +1,32 @@
+@startuml Notification Components Diagram
+title Notification Components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+SystemQueue(Kafka, "Kafka", "Межсервисное взаимодействие")
+
+ContainerDb(notificationsDb, "Очередь сообщений", "RabbitMQ", "Очередь уведомлений на отправку")
+Container_Boundary(notificationsContainerBoundary, "Уведомления") {
+    Component(eventsController, "Events Listener", "Spring", "Чтение и обработка событий")
+    Component(queueController, "Queue Listener", "Spring", "Обработка очереди на отправку")
+    Component(smsComponent, "Sms Controller", "Spring", "Интеграция с сервисом отправки SMS")
+    Component(emailComponent, "Email Controller", "Spring", "Интеграция с сервисом отправки email")
+    Component(pushComponent, "Push Controller", "Spring", "Интеграция с сервисом отправки пушей")
+}
+
+System_Ext(notificationsExtSystem, "Сервис отправки уведомлений", "")
+
+
+Rel(Kafka, eventsController, "Чтение событий", "TCP, Binary")
+Rel(eventsController, notificationsDb, "Запись в очередь", "AMQP")
+Rel(notificationsDb, queueController, "Чтение очереди", "AMQP")
+
+Rel(queueController, smsComponent, "Задача на отправку", "")
+Rel(queueController, emailComponent, "Задача на отправку", "")
+Rel(queueController, pushComponent, "Задача на отправку", "")
+
+Rel(smsComponent, notificationsExtSystem, "SMS", "REST API")
+Rel(emailComponent, notificationsExtSystem, "Email", "REST API")
+Rel(pushComponent, notificationsExtSystem, "Push-уведомление", "REST API")
+
+@enduml

@@ -1,0 +1,81 @@
+@startuml ER-Diagram Smart Home
+
+entity User {
+    * id: uuid <<generated>>
+    --
+    * name: string
+    * address: text
+    * description: text
+    * phone: string
+    * created_at: datetime
+    * role: Role
+}
+
+enum Role {
+    REGULAR_USER
+    SUPPORT
+}
+
+entity House {
+    * id: uuid <<generated>>
+    --
+    * user_id: uuid <<FK>>
+    * address: string
+    * description: text
+}
+
+
+entity Device {
+    * id: uuid <<generated>>
+    --
+    * house_id: uuid <<FK>>
+    * created_at: datetime
+    * updated_at: datetime
+    * type: DeviceType <<FK>>
+    * serial_number: string
+    * status: DeviceStatus
+    * description: text
+}
+
+entity DeviceType {
+    * id: uuid <<generated>>
+    --
+    * type: text
+    * description: text
+}
+
+enum DeviceStatus {
+    ENABLED
+    DISABLED
+    BLOCKED
+}
+
+entity DeviceEvent {
+    * id: uuid <<generated>>
+    --
+    * device_id: uuid <<FK>>
+    * created_at: datetime
+    * payload: jsonb
+}
+
+entity TelemetryEvent {
+    * id: uuid <<generated>>
+    --
+    * created_at: datetime
+    * device_id: uuid <<FK>>
+    * payload : jsonb
+}
+
+
+
+
+User::id ||--|{ House::user_id
+User::role ||--|| Role
+
+Device::type ||--|| DeviceType
+Device::status ||--|| DeviceStatus
+Device::id ||--o{ DeviceEvent::device_id
+Device::house_id }o--|| House::id
+Device::id ||--o{ TelemetryEvent::device_id
+
+@enduml

@@ -1,0 +1,53 @@
+@startuml Device Controller Components Diagram
+title Device Controller Components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+
+ContainerDb(deviceControllerDb, "База данных", "Postgres", "Устройства пользователей, их настройки")
+SystemQueue(Kafka, "Kafka", "Message Broker")
+
+Container_Boundary(deviceControllerBoundary, "Device Controller") {
+    Component(api, "API Controller", "Spring MVC", "Инкапсуляция API различных устройств")
+
+    Component(heatingDevices, "Heating Devices", "Java", "Управление отоплением")
+    Component(lightDevices, "Light Devices", "Java", "Управление освещением")
+    Component(gateDevices, "Gate Devices", "Java", "Управление воротами")
+    Component(cctvDevices, "CCTV Devices", "Java", "Управление видеокамерами")
+    Component(eventsProducer, "Events Publisher", "Java", "Outbox для отправки событий")
+    Component(eventsConsumer, "Events Controller", "Java", "Чтение событий, связанных с устройствами")
+
+    Component(devicesManager, "Device Manager", "Java", "Администрирование списка устройств пользователя, их настроек")
+}
+
+System_Ext(IoTDevicesExtSystem, "IoT-устройства", "отопление, свет, ворота, cctv")
+
+Rel(api, heatingDevices, "Установка температуры", "HTTP, JSON")
+Rel(api, lightDevices, "Регулирование света", "HTTP, JSON")
+Rel(api, gateDevices, "Открыть/Закрыть ворота", "HTTP, JSON")
+Rel(api, cctvDevices, "Управление камерой", "HTTP, JSON")
+Rel(api, devicesManager, "Настройки устройств", "HTTP, JSON")
+
+Rel(eventsConsumer, api, "отправка команд", "HTTP, JSON")
+
+' Rel(heatingDevices, deviceControllerDb, "Read/Write", "SQL")
+' Rel(lightDevices, deviceControllerDb, "Read/Write", "SQL")
+' Rel(gateDevices, deviceControllerDb, "Read/Write", "SQL")
+' Rel(cctvDevices, deviceControllerDb, "Read/Write", "SQL")
+' Rel(devicesManager, deviceControllerDb, "Read/Write", "SQL")
+Rel(deviceControllerBoundary, deviceControllerDb, "Read/Write", "SQL")
+
+Rel(heatingDevices, IoTDevicesExtSystem, "команды", "TCP, Binary")
+Rel(lightDevices, IoTDevicesExtSystem, "команды", "TCP, Binary")
+Rel(gateDevices, IoTDevicesExtSystem, "команды", "TCP, Binary")
+Rel(cctvDevices, IoTDevicesExtSystem, "команды", "TCP, Binary")
+
+Rel(heatingDevices, eventsProducer, "Write", "TCP, Binary")
+Rel(lightDevices, eventsProducer, "Write", "TCP, Binary")
+Rel(gateDevices, eventsProducer, "Write", "TCP, Binary")
+Rel(cctvDevices, eventsProducer, "Write", "TCP, Binary")
+Rel(devicesManager, eventsProducer, "Write", "TCP, Binary")
+
+Rel(eventsProducer, Kafka, "Запись в топик", "TCP, Binary")
+Rel(Kafka, eventsConsumer, "Чтение событий", "TCP, Binary")
+@enduml
