@@ -1,0 +1,22 @@
+@startuml Auth Components Diagram
+title Auth Components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+
+ContainerDb(authDb, "База данных", "Postgres", "Хранение данных о пользователях")
+SystemQueue(Kafka, "Kafka", "Message Broker")
+
+Container_Boundary(authContainerBoundary, "Пользователи") {
+  Component(auth, "Auth Controller", "Spring MVC","Авторизация, регистрация, сброса пароля, профили")
+  Component(security, "Security Controller", "Java", "Аутентификация, права доступа")
+  Component(eventsPublisher, "Events Publisher", "Java", "Outbox для отправки событий")
+}
+
+Rel(security, authDb, "R/W", "SQL")
+Rel(auth, eventsPublisher, "Новый пользователь, email для сброса пароля, о входе итд", "HTTP, JSON")
+Rel(eventsPublisher, Kafka, "Запись в топик", "TCP, Binary")
+Rel(auth, security, "Данные для аутентификации или авторизации", "HTTP, JSON")
+Rel(security, auth, "Результат валидации", "HTTP, JSON")
+
+@enduml
