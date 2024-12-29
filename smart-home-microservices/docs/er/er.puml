@@ -69,7 +69,7 @@ entity TelemetryEvent {
 
 
 
-User::id ||--|{ House::user_id
+User::id }|--|{ House::user_id
 User::role ||--|| Role
 
 Device::type ||--|| DeviceType
